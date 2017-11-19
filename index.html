@@ -1,0 +1,49 @@
+<html>
+	<head>
+		<title>Templation (POC)</title>
+	</head>
+	<body>
+		<template id="user-template">
+			<div>
+				<h1>User Count: {{users.length}}</h1>
+				<ul>
+					<li for="u in users">{{u.name}} : {{u.age}}
+						<ul if="u.selected">
+							<li for="n in u.test">
+								<button click="testFunc2(n)">
+									Show {{n}}
+								</button>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<div>{{testFunc(users[0].name)}}</div>
+				<div>{{testFunc('Jack Is Cool')}}</div>
+				<div>{{ 2 + 2 }}</div>
+				<div>{{ 2 + users[0].age }}</div>
+				<div>{{ users[1].age > 40 }}</div>
+				<ul>
+						<li for="u in users">{{u.name}} : {{u.age}}
+							<ul if="u.selected">
+								<li for="n in u.test">
+									<button click="testFunc2(n)">
+										Show {{n}}
+									</button>
+								</li>
+							</ul>
+						</li>
+					</ul>
+			</div>
+		</template>
+
+		<div id="app"></div>
+
+		<script type="text/javascript" src="test.js"></script>
+	</body>
+</html>
+
+<!--
+for
+if
+click
+-->
