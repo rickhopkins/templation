@@ -10,14 +10,14 @@
 					<li for="u in users">{{u.name}} : {{u.age}}
 						<ul if="u.selected">
 							<li for="n in u.test">
-								<button click="testFunc2(n)">
+								<button on:click="testFunc2(n)">
 									Show {{n}}
 								</button>
 							</li>
 						</ul>
 					</li>
 				</ul>
-				<div>{{testFunc(users[0].name)}}</div>
+				<div on:mouseover="testFunc3('test message')">{{testFunc(users[0].name)}}</div>
 				<div>{{testFunc('Jack Is Cool')}}</div>
 				<div>{{ 2 + 2 }}</div>
 				<div>{{ 2 + users[0].age }}</div>
@@ -26,7 +26,7 @@
 						<li for="u in users">{{u.name}} : {{u.age}}
 							<ul if="u.selected">
 								<li for="n in u.test">
-									<button click="testFunc2(n)">
+									<button on:click="testFunc2(n)">
 										Show {{n}}
 									</button>
 								</li>

@@ -17,6 +17,9 @@
 		},
 		testFunc2: function(num) {
 			alert(num);
+		},
+		testFunc3: function(message) {
+			alert(message);
 		}
 	};
 
@@ -46,10 +49,46 @@
 	let html = template.innerHTML;
 	app.innerHTML = templater(html, data);
 
+	/** create an array of events to search for */
+	const eventTypes = [ // https://www.w3schools.com/jsref/dom_obj_event.asp
+		/** mouse events */
+		'click', 'contextmenu', 'dblclick', 'mousedown', 'mouseenter', 'mouseleave', 'mousemove', 'mouseover', 'mouseout', 'mouseup',
+
+		/** keyboard events */
+		'keydown', 'keypress', 'keyup',
+
+		/** frame / object events */
+		'abort', 'beforeunload', 'error', 'hashchange', 'load', 'pageshow', 'pagehide', 'resize', 'scroll', 'unload',
+
+		/** form events */
+		'blur', 'change', 'focus', 'focusin', 'focusout', 'input', 'invalid', 'reset', 'search', 'select', 'submit',
+
+		/** drag events */
+		'drag', 'dragend', 'dragenter', 'dragleave', 'dragover', 'dragstart', 'drop',
+
+		/** clipboard events */
+		'copy', 'cut', 'paste',
+
+		/** print events */
+		'afterprint', 'beforeprint',
+
+		/** media events */
+		'abort', 'canplay', 'canplaythrough', 'durationchange', 'emptied', 'ended', 'error', 'loadeddata', 'loadedmetadata', 'loadstart', 'pause', 'play', 'playing', 'progress', 'ratechange', 'seeked', 'seeking', 'stalled', 'suspend', 'timeupdate', 'volumechange', 'waiting',
+
+		/** misc events */
+		'online', 'offline', 'wheel',
+
+		/** touch events */
+		'touchcancel', 'touchend', 'touchmove', 'touchstart'
+	];
+
+	/** create event selector */
+	const eventSelector = `[on\\:${eventTypes.join('], [on\\:')}]`;
+
 	/** search for click attribute (has to happen after inserted into DOM) */
-	var clickAttrElement;
-	while ((clickAttrElement = app.querySelector('[click]')) !== null) {
-		clickAttach(clickAttrElement, data);
+	var eventAttrElement;
+	while ((eventAttrElement = app.querySelector(eventSelector)) !== null) {
+		eventAttach(eventAttrElement, data);
 	}
 
 	/** return a function that can do template parsing */
@@ -163,21 +202,35 @@
 		}
 	}
 
-	/** bind click events to the correct object method */
-	function clickAttach(clickElement, data) {
-		/** get the for attribute value expression, and remove the attribute */
-		var clickAttrVal = clickElement.getAttribute('click');
+	/** bind events to the correct object method */
+	function eventAttach(element, data) {
+		/** get all attributes */
+		let eventAttr = '';
+		let eventName = '';
+		for (let a = 0; a < element.attributes.length; a++) {
+			if (element.attributes[a].name.substr(0, 3) === 'on:') {
+				eventAttr = element.attributes[a].name;
+				eventName = element.attributes[a].name.substr(3);
+				break;
+			}
+		}
 
-		/** create a new clickable element */
-		var newClickable = clickElement.cloneNode(true);
-		newClickable.removeAttribute('click');
-
-		/** add the click event */
-		newClickable.addEventListener('click', function() {
-			return using(data, clickAttrVal);
-		});
-
-		/** replace the crFor element with the rows */
-		clickElement.parentNode.replaceChild(newClickable, clickElement);
+		/** get the event attribute */
+		if (eventAttr.length > 0) {
+			/** get the attribute value */
+			var elementAttrVal = element.getAttribute(eventAttr);		
+	
+			/** create a new element */
+			var newElement = element.cloneNode(true);
+			newElement.removeAttribute(eventAttr);
+	
+			/** add the event */
+			newElement.addEventListener(eventName, function() {
+				return using(data, elementAttrVal);
+			});
+	
+			/** replace the element */
+			element.parentNode.replaceChild(newElement, element);
+		}
 	}
 })();
