@@ -33,7 +33,7 @@
 	/** search for iterator (for) attribute */
 	var forAttrElement;
 	while ((forAttrElement = template.content.querySelector('[for]')) !== null) {
-		forIterator2(forAttrElement, template, data);
+		forIterator(forAttrElement, template, data);
 	}
 
 	/** search for if attribute */
@@ -98,48 +98,7 @@
 	}
 
 	/** iterate over items in for */
-	function forIterator(forElement, html, data) {
-		/** get the for attribute value expression */
-		var forAttrVal = forElement.getAttribute('for').split(' ');
-		var entityRef = forAttrVal[0];
-		var entityProp = forAttrVal[2];
-
-		/** cycle over the property */
-		var forHTML = '';
-
-		/** check the entityProperty type */
-		if (Array.isArray(data[entityProp])) {
-			data[entityProp].forEach((row, i) => {
-				/** add html for the iteration */
-				var rowEl = forElement.cloneNode(true);
-				rowEl.removeAttribute('for');
-				var rowHTML = rowEl.outerHTML;
-
-				/** search the row properties */
-				const re = /{{\s?([\w\W]*?)\s?}}/gmi;
-				let match;
-				while ((match = re.exec(rowHTML)) !== null) {
-					/** catch exceptions */
-					try {
-						/** replace the values in the html and reset the lastIndex of the regex */
-						rowHTML = rowHTML.replace(match[0], using(data, match[1], entityRef, row));
-						re.lastIndex = 0;
-					} catch (ex) {
-						console.log(ex);
-					}
-				}
-
-				/** add the html to the crForHtml */
-				forHTML += rowHTML;
-			});
-		}
-
-		/** replace the crFor element with the rows */
-		return html.replace(forElement.outerHTML, forHTML);
-	}
-
-	/** iterate over items in for */
-	function forIterator2(forElement, template, data) {
+	function forIterator(forElement, template, data) {
 		/** get the for attribute value expression */
 		var forAttrVal = forElement.getAttribute('for').split(' ');
 		var entityRef = forAttrVal[0];
