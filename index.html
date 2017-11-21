@@ -5,7 +5,7 @@
 	<body>
 		<template id="user-template">
 			<div>
-				<h1>User Count: {{users.length}}</h1>
+				<h1 title="User Count: {{users.length}}">User Count: {{users.length}}</h1>
 				<ul>
 					<li for="u in users">{{u.name}} : {{u.age}}
 						<ul if="u.selected">

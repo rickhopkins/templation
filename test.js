@@ -20,6 +20,15 @@
 		},
 		testFunc3: function(message) {
 			alert(message);
+		},
+		addUser: function(name, age) {
+			this.users.push({
+				id: this.users.length,
+				name: name,
+				age: age,
+				selected: true,
+				test: [1, 2, 3]
+			});
 		}
 	};
 
