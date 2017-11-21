@@ -36,12 +36,8 @@
 	const app = document.getElementById('app');
 	
 	/** get the template and inner html */
-	const templateSource = document.getElementById('user-template');
+	const template = document.getElementById('user-template');
 	
-	/** create a secondary template to store the modified DOM */
-	const template = document.createElement('template');
-	template.innerHTML = templateSource.innerHTML;
-
 	/** search for iterator (for) attribute */
 	var forAttrElement;
 	while ((forAttrElement = template.content.querySelector('[for]')) !== null) {
