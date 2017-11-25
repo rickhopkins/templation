@@ -103,18 +103,20 @@
 	}
 
 	function observableArray(arrayObj) {
-		//push(), pop(),  shift(), unshift(), slice(), and splice()
-		const _push = Array.prototype.push;
-		Object.defineProperty(arrayObj, "push", {
-			configurable: false,
-			enumerable: false,
-			writable: false,
-			value: function () {
-				let newLength = _push.apply(this, arguments);
-				observable(this);
-				buildInterface();
-				return newLength;
-			}
+		const arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice'];
+		arrayMethods.forEach(m => {
+			const _method = Array.prototype[m];
+			Object.defineProperty(arrayObj, m, {
+				configurable: false,
+				enumerable: false,
+				writable: false,
+				value: function () {
+					let result = _method.apply(this, arguments);
+					observable(this);
+					buildInterface();
+					return result;
+				}
+			});
 		});
 	}
 
