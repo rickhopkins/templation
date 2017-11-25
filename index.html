@@ -8,6 +8,7 @@
 				<h1 title="User Count: {{users.length}}">User Count: {{users.length}}</h1>
 				<ul>
 					<li for="u in users">{{u.name}} : {{u.age}}
+						<button on:click="modifyUser(u)">Modify</button>
 						<ul if="u.selected">
 							<li for="n in u.test">
 								<button on:click="testFunc2(n)">
@@ -17,22 +18,13 @@
 						</ul>
 					</li>
 				</ul>
-				<div on:mouseover="testFunc3('test message')">{{testFunc(users[0].name)}}</div>
+				<!-- <div on:mouseover="testFunc3('test message')">{{testFunc(users[0].name)}}</div> -->
 				<div>{{testFunc('Jack Is Cool')}}</div>
 				<div>{{ 2 + 2 }}</div>
 				<div>{{ 2 + users[0].age }}</div>
 				<div>{{ users[1].age > 40 }}</div>
-				<ul>
-						<li for="u in users">{{u.name}} : {{u.age}}
-							<ul if="u.selected">
-								<li for="n in u.test">
-									<button on:click="testFunc2(n)">
-										Show {{n}}
-									</button>
-								</li>
-							</ul>
-						</li>
-					</ul>
+				<button on:click="addUser('New Kid', 13)">Add A User</button>
+				<button on:click="changeUsers()">Change Users</button>
 			</div>
 		</template>
 

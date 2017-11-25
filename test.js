@@ -1,59 +1,4 @@
-(function(){
-	/** setup data */
-	var data = {
-		count: 2,
-		users: [
-			{ 'id': 0, 'name': 'John Doe', age: 38, selected: true, test: [1, 2, 3] },
-			{ 'id': 1, 'name': 'Jane Doe', age: 38, selected: true, test: [4, 5, 6] },
-			{ 'id': 2, 'name': 'Billy Doe', age: 14, selected: true, test: [7, 8, 9] },
-			{ 'id': 3, 'name': 'Samantha Doe', age: 12, selected: true, test: [10, 11, 12] },
-			{ 'id': 4, 'name': 'Jeremiah Doe', age: 11, selected: true, test: [13, 14, 15] },
-			{ 'id': 5, 'name': 'Susie Doe', age: 9, selected: false, test: [16, 17, 18] },
-			{ 'id': 6, 'name': 'Ezekiel Doe', age: 7, selected: false, test: [19, 20, 21]},
-			{ 'id': 7, 'name': 'Molly Doe', age: 6, selected: true, test: [21, 22, 23] }
-		],
-		testFunc: function(message) {
-			return message;
-		},
-		testFunc2: function(num) {
-			alert(num);
-		},
-		testFunc3: function(message) {
-			alert(message);
-		},
-		addUser: function(name, age) {
-			this.users.push({
-				id: this.users.length,
-				name: name,
-				age: age,
-				selected: true,
-				test: [1, 2, 3]
-			});
-		}
-	};
-
-	/** get a reference to the app container */
-	const app = document.getElementById('app');
-	
-	/** get the template and inner html */
-	const template = document.getElementById('user-template');
-	
-	/** search for iterator (for) attribute */
-	var forAttrElement;
-	while ((forAttrElement = template.content.querySelector('[for]')) !== null) {
-		forIterator(forAttrElement, template, data);
-	}
-
-	/** search for if attribute */
-	var ifAttrElement;
-	while ((ifAttrElement = template.content.querySelector('[if]')) !== null) {
-		ifCheck(ifAttrElement, data);
-	}
-
-	/** add the template to the app */
-	let html = template.innerHTML;
-	app.innerHTML = templater(html, data);
-
+(function() {
 	/** create an array of events to search for */
 	const eventTypes = [ // https://www.w3schools.com/jsref/dom_obj_event.asp
 		/** mouse events */
@@ -87,13 +32,124 @@
 		'touchcancel', 'touchend', 'touchmove', 'touchstart'
 	];
 
-	/** create event selector */
-	const eventSelector = `[on\\:${eventTypes.join('], [on\\:')}]`;
+	/** setup data */
+	var data = {
+		count: 2,
+		users: [
+			{ 'id': 0, 'name': 'John Doe', age: 38, selected: true, test: [1, 2, 3] },
+			{ 'id': 1, 'name': 'Jane Doe', age: 38, selected: true, test: [4, 5, 6] },
+			{ 'id': 2, 'name': 'Billy Doe', age: 14, selected: true, test: [7, 8, 9] },
+			{ 'id': 3, 'name': 'Samantha Doe', age: 12, selected: true, test: [10, 11, 12] },
+			{ 'id': 4, 'name': 'Jeremiah Doe', age: 11, selected: true, test: [13, 14, 15] },
+			{ 'id': 5, 'name': 'Susie Doe', age: 9, selected: false, test: [16, 17, 18] },
+			{ 'id': 6, 'name': 'Ezekiel Doe', age: 7, selected: false, test: [19, 20, 21]},
+			{ 'id': 7, 'name': 'Molly Doe', age: 6, selected: true, test: [21, 22, 23] }
+		],
+		testFunc: function(message) {
+			return message;
+		},
+		testFunc2: function(num) {
+			alert(num);
+		},
+		testFunc3: function(message) {
+			alert(message);
+		},
+		addUser: function(name, age) {
+			data.users.push({
+				id: data.users.length,
+				name: name,
+				age: age,
+				selected: true,
+				test: [1, 2, 3]
+			});
+		},
+		modifyUser: function(user) {
+			let newName = prompt('What would you like the new name to be?');
+			user.name = newName;
+		},
+		changeUsers: function() {
+			data.users = [{ 'id': 6, 'name': 'Ezekiel Doe', age: 7, selected: false, test: [19, 20, 21]},
+			{ 'id': 7, 'name': 'Molly Doe', age: 6, selected: true, test: [21, 22, 23] }];
+		}
+	};
 
-	/** search for click attribute (has to happen after inserted into DOM) */
-	var eventAttrElement;
-	while ((eventAttrElement = app.querySelector(eventSelector)) !== null) {
-		eventAttach(eventAttrElement, data);
+	/** make the data observable */
+	observable(data);
+
+	function observable(obj) {
+		if (Array.isArray(obj) && !obj.hasOwnProperty('push')) observableArray(obj);
+		for (let prop in obj) {
+			observableProp(obj, prop);
+			if (typeof obj[prop] === 'object') {
+				observable(obj[prop]);
+			}
+		}
+	}
+
+	function observableProp(obj, prop) {
+		let value = obj[prop]
+		Object.defineProperty(obj, prop, {
+			get () {
+				return value;
+			},
+			set (newValue) {
+				value = newValue;
+				if (typeof value === 'object') observable(value);
+				
+				console.log('Rebuild');
+				buildInterface(obj, prop, value);
+			}
+		});
+	}
+
+	function observableArray(arrayObj) {
+		//push(), pop(),  shift(), unshift(), slice(), and splice()
+		const _push = Array.prototype.push;
+		Object.defineProperty(arrayObj, "push", {
+			configurable: false,
+			enumerable: false,
+			writable: false,
+			value: function () {
+				let newLength = _push.apply(this, arguments);
+				observable(this);
+				buildInterface();
+				return newLength;
+			}
+		});
+	}
+
+	function buildInterface(obj, prop, value) {
+		/** get a reference to the app container */
+		const app = document.getElementById('app');
+		
+		/** get the template and inner html */
+		const originalTemplate = document.getElementById('user-template');
+		const template = originalTemplate.cloneNode(true);
+		
+		/** search for iterator (for) attribute */
+		var forAttrElement;
+		while ((forAttrElement = template.content.querySelector('[for]')) !== null) {
+			forIterator(forAttrElement, template, data);
+		}
+
+		/** search for if attribute */
+		var ifAttrElement;
+		while ((ifAttrElement = template.content.querySelector('[if]')) !== null) {
+			ifCheck(ifAttrElement, data);
+		}
+
+		/** add the template to the app */
+		let html = template.innerHTML;
+		app.innerHTML = templater(html, data);
+
+		/** create event selector */
+		const eventSelector = `[on\\:${eventTypes.join('], [on\\:')}]`;
+	
+		/** search for click attribute (has to happen after inserted into DOM) */
+		var eventAttrElement;
+		while ((eventAttrElement = app.querySelector(eventSelector)) !== null) {
+			eventAttach(eventAttrElement, data);
+		}
 	}
 
 	/** return a function that can do template parsing */
@@ -170,17 +226,17 @@
 					rowProps.forEach(p => {
 						rowHTML = rowHTML.replace(`${entityRef}.`, `${entityProp}[${i}].`);
 					});
-				} else {
-					/** create regular expression to match the entityRef */
-					let re = new RegExp(`([^\\w])(${entityRef}\\b)([^\\w])`, 'gmi'); // /([^\w])(n\b)([^/w])/gmi
-					let match;
-					while ((match = re.exec(rowHTML)) !== null) {
-						try {
-							let replacement = `${match[1]}${entityProp}[${i}]${match[3]}`;
-							rowHTML = rowHTML.replace(match[0], replacement);
-						} catch (ex) {
-							console.log(ex);
-						}
+				}
+				
+				/** create regular expression to match the entityRef */
+				let re = new RegExp(`([^\\w])(${entityRef}\\b)([^\\w])`, 'gmi'); // /([^\w])(n\b)([^/w])/gmi
+				let match;
+				while ((match = re.exec(rowHTML)) !== null) {
+					try {
+						let replacement = `${match[1]}${entityProp}[${i}]${match[3]}`;
+						rowHTML = rowHTML.replace(match[0], replacement);
+					} catch (ex) {
+						console.log(ex);
 					}
 				}
 				
@@ -238,4 +294,7 @@
 			element.parentNode.replaceChild(newElement, element);
 		}
 	}
+
+	/** build the interface */
+	buildInterface();
 })();
