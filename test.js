@@ -141,17 +141,35 @@
 		}
 
 		/** add the template to the app */
-		let html = template.innerHTML;
-		app.innerHTML = templater(html, data);
+		let virtualDOM = document.createElement('template');
+		virtualDOM.innerHTML = templater(template.innerHTML, data);
+
+		/** set the app */
+		diffDom(app, virtualDOM);
 
 		/** create event selector */
 		const eventSelector = `[on\\:${eventTypes.join('], [on\\:')}]`;
-	
+		
 		/** search for click attribute (has to happen after inserted into DOM) */
-		var eventAttrElement;
-		while ((eventAttrElement = app.querySelector(eventSelector)) !== null) {
-			eventAttach(eventAttrElement, data);
-		}
+		var eventAttrElements = app.querySelectorAll(eventSelector);
+		eventAttrElements.forEach(el => eventAttach(el, data));
+	}
+
+	function diffDom(originalDOM, virtualDOM) {
+		let virtualDOMEl = virtualDOM.content || virtualDOM;
+
+		// if (originalDOM.innerHTML !== virtualDOM.innerHTML) {
+		// 	if (originalDOM.hasChildNodes()) {
+		// 		originalDOM.childNodes.forEach((child, i) => {
+		// 			if (!child.isEqualNode(virtualDOMEl.childNodes[i])) {
+		// 				child.parentNode.replaceChild(virtualDOMEl.childNodes[i].cloneNode(true), child);
+		// 			}
+		// 		});
+		// 	} else {
+				// originalDOM.appendChild(virtualDOMEl);
+				originalDOM.innerHTML = virtualDOM.innerHTML;
+		// 	}
+		// }
 	}
 
 	/** return a function that can do template parsing */
@@ -285,7 +303,6 @@
 	
 			/** create a new element */
 			var newElement = element.cloneNode(true);
-			newElement.removeAttribute(eventAttr);
 	
 			/** add the event */
 			newElement.addEventListener(eventName, function() {
