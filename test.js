@@ -70,6 +70,9 @@
 		changeUsers: function() {
 			data.users = [{ 'id': 6, 'name': 'Ezekiel Doe', age: 7, selected: false, test: [19, 20, 21]},
 			{ 'id': 7, 'name': 'Molly Doe', age: 6, selected: true, test: [21, 22, 23] }];
+		},
+		toggleVisibility: function(user) {
+			user.selected = !user.selected;
 		}
 	};
 
@@ -97,7 +100,7 @@
 				if (typeof value === 'object') observable(value);
 				
 				console.log('Rebuild');
-				buildInterface(obj, prop, value);
+				buildInterface(false);
 			}
 		});
 	}
@@ -113,67 +116,71 @@
 				value: function () {
 					let result = _method.apply(this, arguments);
 					observable(this);
-					buildInterface();
+					buildInterface(false);
 					return result;
 				}
 			});
 		});
 	}
 
-	function buildInterface(obj, prop, value) {
+	function buildInterface(initial) {
 		/** get a reference to the app container */
 		const app = document.getElementById('app');
-		
+
 		/** get the template and inner html */
 		const originalTemplate = document.getElementById('user-template');
-		const template = originalTemplate.cloneNode(true);
-		
+		const virtualDOM = createVirtualDOM(originalTemplate);
+
+		/** set the app */
+		updateDOM(app, virtualizeDOM(virtualDOM.content.children[0]), !initial ? virtualizeDOM(app.children[0]) : undefined);
+	}
+
+	function virtualizeDOM(element) {
+		let vElement = { type: element.nodeName, props: [], children: [], value: '' };
+		if (['#text', '#comment'].includes(element.nodeName)) vElement.value = element.nodeValue;
+
+		if (element.attributes) {
+			for (let i = 0; i < element.attributes.length; i++) {
+				let a = element.attributes[i];
+				vElement.props.push({ 'name': a.name, 'value': a.value });
+			}
+		}
+
+		if (element.childNodes) {
+			element.childNodes.forEach(c => {
+				vElement.children.push(virtualizeDOM(c));
+			});
+		}
+
+		return vElement;
+	}
+
+	function createVirtualDOM(template) {
+		/** create new template */
+		let virtualDOM = template.cloneNode(true);
+
 		/** search for iterator (for) attribute */
 		var forAttrElement;
-		while ((forAttrElement = template.content.querySelector('[for]')) !== null) {
-			forIterator(forAttrElement, template, data);
+		while ((forAttrElement = virtualDOM.content.querySelector('[for]')) !== null) {
+			forIterator(forAttrElement, virtualDOM, data);
 		}
 
 		/** search for if attribute */
-		var ifAttrElement;
-		while ((ifAttrElement = template.content.querySelector('[if]')) !== null) {
-			ifCheck(ifAttrElement, data);
-		}
+		var ifAttrElements = virtualDOM.content.querySelectorAll('[if]');
+		ifAttrElements.forEach(el => ifCheck(el, data));
 
-		/** add the template to the app */
-		let virtualDOM = document.createElement('template');
-		virtualDOM.innerHTML = templater(template.innerHTML, data);
+		/** replace simple template values */
+		templater(virtualDOM, data);
 
-		/** set the app */
-		diffDom(app, virtualDOM);
-
-		/** create event selector */
-		const eventSelector = `[on\\:${eventTypes.join('], [on\\:')}]`;
-		
-		/** search for click attribute (has to happen after inserted into DOM) */
-		var eventAttrElements = app.querySelectorAll(eventSelector);
-		eventAttrElements.forEach(el => eventAttach(el, data));
-	}
-
-	function diffDom(originalDOM, virtualDOM) {
-		let virtualDOMEl = virtualDOM.content || virtualDOM;
-
-		// if (originalDOM.innerHTML !== virtualDOM.innerHTML) {
-		// 	if (originalDOM.hasChildNodes()) {
-		// 		originalDOM.childNodes.forEach((child, i) => {
-		// 			if (!child.isEqualNode(virtualDOMEl.childNodes[i])) {
-		// 				child.parentNode.replaceChild(virtualDOMEl.childNodes[i].cloneNode(true), child);
-		// 			}
-		// 		});
-		// 	} else {
-				// originalDOM.appendChild(virtualDOMEl);
-				originalDOM.innerHTML = virtualDOM.innerHTML;
-		// 	}
-		// }
+		/** return the virtual DOM */
+		return virtualDOM;
 	}
 
 	/** return a function that can do template parsing */
-	function templater(html, data) {
+	function templater(template, data) {
+		/** get the html */
+		let html = template.innerHTML;
+
 		/** set the pattern for replacement */
 		const re = /{{\s?([\w\W]*?)\s?}}/gmi;
 
@@ -190,8 +197,113 @@
 			}
 		}
 
-		/** return the new html */
-		return html;
+		/** reset the innerHTML */
+		template.innerHTML = html;
+	}
+
+	function attachEventListeners(element) {
+		/** create event selector */
+		const eventSelector = `[on\\:${eventTypes.join('], [on\\:')}]`;
+		
+		/** search for click attribute (has to happen after inserted into DOM) */
+		var eventAttrElements = element.querySelectorAll(eventSelector);
+		eventAttrElements.forEach(el => eventAttach(el, data));
+	}
+
+	function updateDOM(parent, newNode, oldNode, index) {
+		if (!index) index = 0;
+
+		if (!oldNode) {
+			if (newNode) {
+				let newDOMNode = createElement(newNode);
+				parent.appendChild(newDOMNode);
+
+				/** attach events */
+				if (!['#text', '#comment'].includes(newNode.type)) attachEventListeners(newDOMNode);
+			}
+		} else if (!newNode) {
+			parent.removeChild(parent.childNodes[index]);
+		} else if (changed(newNode, oldNode)) {
+			let newDOMNode = createElement(newNode);
+			parent.replaceChild(newDOMNode, parent.childNodes[index]);
+
+			/** attach events */
+			if (!['#text', '#comment'].includes(newNode.type)) attachEventListeners(newDOMNode);
+		} else if (newNode.type) {
+			updateProps(parent.childNodes[index], newNode.props, oldNode.props);
+
+			const newLength = newNode.children.length;
+			const oldLength = oldNode.children.length;
+			
+			/** check for less new than old */
+			if (newLength < oldLength) {
+				/** get all the old elements that are past the new */
+				let children = [];
+				for (let i = newLength; i < oldLength; i++) {
+					children.push(parent.childNodes[index].childNodes[i]);
+				}
+
+				/** remove old elements */
+				children.forEach(c => parent.childNodes[index].removeChild(c));
+			}
+
+			/** compare all new nodes */
+			for (let i = 0; i < newLength; i++) {
+				updateDOM(parent.childNodes[index], newNode.children[i], oldNode.children[i], i);
+			}
+		}
+	}
+
+	function changed(node1, node2) {
+		return (typeof node1 !== typeof node2) || (node1.type !== node2.type) || (['#text', '#comment'].includes(node1.type) && node1.value !== node2.value);
+	}
+
+	function createElement(node) {
+		if (node.type === '#text') {
+			return document.createTextNode(node.value);
+		}
+		if (node.type === '#comment') {
+			return document.createComment(node.value);
+		}
+		const $el = document.createElement(node.type);
+		setProps($el, node.props);
+		node.children.map(createElement).forEach($el.appendChild.bind($el));
+		return $el;
+	}
+
+	function setProp(target, prop) {
+		target.setAttribute(prop.name, prop.value);
+	}
+
+	function setProps(target, props) {
+		props.forEach(prop => {
+			setProp(target, prop);
+		});
+	}
+
+	function removeProp(target, prop) {
+		target.removeAttribute(prop.name);
+	}
+
+	function updateProps(target, newProps, oldProps) {
+		newProps.forEach(prop => {
+			let match = oldProps.find(p => p.name === prop.name);
+			if (match) {
+				if (match.value !== prop.value) setProp(target, prop); // update
+			} else {
+				setProp(target, prop); // add new
+			}
+		});
+		oldProps.forEach(prop => {
+			let match = newProps.find(p => p.name === prop.name);
+			if (!match) {
+				removeProp(target, prop);
+			}
+		});
+	}
+
+	function emptyElement(element) {
+		while (element.firstChild) element.removeChild(element.firstChild);
 	}
 
 	function using(obj, code, ref, refData) {
@@ -299,21 +411,25 @@
 		/** get the event attribute */
 		if (eventAttr.length > 0) {
 			/** get the attribute value */
-			var elementAttrVal = element.getAttribute(eventAttr);		
-	
+			var elementAttrVal = element.getAttribute(eventAttr);
+
 			/** create a new element */
 			var newElement = element.cloneNode(true);
-	
-			/** add the event */
-			newElement.addEventListener(eventName, function() {
+
+			/** create the event function */
+			let eventFunc = function() {
 				return using(data, elementAttrVal);
-			});
-	
+			};
+
+			/** remove and re-add the event listener */
+			newElement.removeEventListener(eventName, eventFunc);
+			newElement.addEventListener(eventName, eventFunc);
+
 			/** replace the element */
 			element.parentNode.replaceChild(newElement, element);
 		}
 	}
 
 	/** build the interface */
-	buildInterface();
+	buildInterface(true);
 })();

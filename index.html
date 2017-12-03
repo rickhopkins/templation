@@ -1,6 +1,11 @@
 <html>
 	<head>
 		<title>Templation (POC)</title>
+		<style>
+			.red {
+				color: red;
+			}
+		</style>
 	</head>
 	<body>
 		<template id="user-template">
@@ -9,9 +14,10 @@
 				<ul>
 					<li for="u in users">{{u.name}} : {{u.age}}
 						<button on:click="modifyUser(u)">Modify</button>
+						<button on:click="toggleVisibility(u)">Toggle</button>
 						<ul if="u.selected">
 							<li for="n in u.test">
-								<button on:click="testFunc2(n)">
+								<button on:click="testFunc2(n)" class="red">
 									Show {{n}}
 								</button>
 							</li>
