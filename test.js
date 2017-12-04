@@ -413,20 +413,14 @@
 			/** get the attribute value */
 			var elementAttrVal = element.getAttribute(eventAttr);
 
-			/** create a new element */
-			var newElement = element.cloneNode(true);
-
 			/** create the event function */
 			let eventFunc = function() {
 				return using(data, elementAttrVal);
 			};
 
 			/** remove and re-add the event listener */
-			newElement.removeEventListener(eventName, eventFunc);
-			newElement.addEventListener(eventName, eventFunc);
-
-			/** replace the element */
-			element.parentNode.replaceChild(newElement, element);
+			element.removeEventListener(eventName, eventFunc);
+			element.addEventListener(eventName, eventFunc);
 		}
 	}
 
