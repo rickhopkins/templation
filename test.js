@@ -271,6 +271,10 @@
 		return $el;
 	}
 
+	function isEventProp(prop) {
+		return /^on:/.test(prop.name);
+	}
+
 	function setProp(target, prop) {
 		target.setAttribute(prop.name, prop.value);
 	}
@@ -291,7 +295,9 @@
 			if (match) {
 				if (match.value !== prop.value) setProp(target, prop); // update
 			} else {
-				setProp(target, prop); // add new
+				if (!isEventProp(prop)) {
+					setProp(target, prop); // add new
+				}
 			}
 		});
 		oldProps.forEach(prop => {
@@ -421,6 +427,9 @@
 			/** remove and re-add the event listener */
 			element.removeEventListener(eventName, eventFunc);
 			element.addEventListener(eventName, eventFunc);
+
+			/** remove the attribute */
+			element.removeAttribute(eventAttr);
 		}
 	}
 
