@@ -32,49 +32,12 @@
 		'touchcancel', 'touchend', 'touchmove', 'touchstart'
 	];
 
-	/** setup data */
-	var data = {
-		count: 2,
-		users: [
-			{ 'id': 0, 'name': 'John Doe', age: 38, selected: true, test: [1, 2, 3] },
-			{ 'id': 1, 'name': 'Jane Doe', age: 38, selected: true, test: [4, 5, 6] },
-			{ 'id': 2, 'name': 'Billy Doe', age: 14, selected: true, test: [7, 8, 9] },
-			{ 'id': 3, 'name': 'Samantha Doe', age: 12, selected: true, test: [10, 11, 12] },
-			{ 'id': 4, 'name': 'Jeremiah Doe', age: 11, selected: true, test: [13, 14, 15] },
-			{ 'id': 5, 'name': 'Susie Doe', age: 9, selected: false, test: [16, 17, 18] },
-			{ 'id': 6, 'name': 'Ezekiel Doe', age: 7, selected: false, test: [19, 20, 21]},
-			{ 'id': 7, 'name': 'Molly Doe', age: 6, selected: true, test: [21, 22, 23] }
-		],
-		testFunc: function(message) {
-			return message;
-		},
-		testFunc2: function(num) {
-			alert(num);
-		},
-		testFunc3: function(message) {
-			alert(message);
-		},
-		addUser: function(name, age) {
-			data.users.push({
-				id: data.users.length,
-				name: name,
-				age: age,
-				selected: true,
-				test: [1, 2, 3]
-			});
-		},
-		modifyUser: function(user) {
-			let newName = prompt('What would you like the new name to be?');
-			user.name = newName;
-		},
-		changeUsers: function() {
-			data.users = [{ 'id': 6, 'name': 'Ezekiel Doe', age: 7, selected: false, test: [19, 20, 21]},
-			{ 'id': 7, 'name': 'Molly Doe', age: 6, selected: true, test: [21, 22, 23] }];
-		},
-		toggleVisibility: function(user) {
-			user.selected = !user.selected;
-		}
-	};
+	/** initialize directives */
+	let directives = [
+		{ 'selector': 'crFor', 'parser': forIterator, 'order': 1, 'pre': true, 'post': false },
+		{ 'selector': 'crIf', 'parser': ifCheck, 'order': 2, 'pre': true, 'post': false },
+		{ 'selector': 'crOn', 'parser': eventAttach, 'order': 3, 'pre': false, 'post': true }
+	];
 
 	/** make the data observable */
 	observable(data);
@@ -159,15 +122,18 @@
 		/** create new template */
 		let virtualDOM = template.cloneNode(true);
 
-		/** search for iterator (for) attribute */
-		var forAttrElement;
-		while ((forAttrElement = virtualDOM.content.querySelector('[for]')) !== null) {
-			forIterator(forAttrElement, virtualDOM, data);
-		}
+		/** sort the directives */
+		directives.sort(function(a, b) {
+			return a.order - b.order;
+		});
 
-		/** search for if attribute */
-		var ifAttrElements = virtualDOM.content.querySelectorAll('[if]');
-		ifAttrElements.forEach(el => ifCheck(el, data));
+		/** cycle through pre directives */
+		directives.filter(dir => dir.pre).forEach(dir => {
+			let directiveElements;
+			while ((directiveElements = virtualDOM.content.querySelector(`[${dir.selector}]`)) !== null) {
+				dir.parser(dir, directiveElements, virtualDOM, data);
+			}
+		});
 
 		/** replace simple template values */
 		templater(virtualDOM, data);
@@ -203,7 +169,7 @@
 
 	function attachEventListeners(element) {
 		/** create event selector */
-		const eventSelector = `[on\\:${eventTypes.join('], [on\\:')}]`;
+		const eventSelector = `[crOn\\:${eventTypes.join('], [cr\\:on\\:')}]`;
 		
 		/** search for click attribute (has to happen after inserted into DOM) */
 		var eventAttrElements = element.querySelectorAll(eventSelector);
@@ -272,7 +238,7 @@
 	}
 
 	function isEventProp(prop) {
-		return /^on:/.test(prop.name);
+		return /^cron:/.test(prop.name);
 	}
 
 	function setProp(target, prop) {
@@ -335,10 +301,11 @@
 		return withFunc(obj, refData);
 	}
 
-	/** iterate over items in for */
-	function forIterator(forElement, template, data) {
+	/** directive parser functions */
+
+	function forIterator(directive, forElement, template, data) {
 		/** get the for attribute value expression */
-		var forAttrVal = forElement.getAttribute('for').split(' ');
+		var forAttrVal = forElement.getAttribute(directive.selector).split(' ');
 		var entityRef = forAttrVal[0];
 		var entityProp = forAttrVal[2];
 
@@ -355,7 +322,7 @@
 			dataProperty.forEach((row, i) => {
 				/** add html for the iteration */
 				var rowEl = forElement.cloneNode(true);
-				rowEl.removeAttribute('for');
+				rowEl.removeAttribute(directive.selector);
 				var rowHTML = rowEl.outerHTML;
 
 				/** get the row properties */
@@ -389,11 +356,10 @@
 		template.innerHTML = html;
 	}
 
-	/** check if elements should stay in the dom */
-	function ifCheck(ifElement, data) {
+	function ifCheck(directive, ifElement, template, data) {
 		/** get the for attribute value expression, and remove the attribute */
-		var ifAttrVal = ifElement.getAttribute('if');
-		ifElement.removeAttribute('if');
+		var ifAttrVal = ifElement.getAttribute(directive.selector);
+		ifElement.removeAttribute(directive.selector);
 
 		/** evaluate the expression */
 		if (using(data, ifAttrVal) === false) {
@@ -401,15 +367,14 @@
 		}
 	}
 
-	/** bind events to the correct object method */
 	function eventAttach(element, data) {
 		/** get all attributes */
 		let eventAttr = '';
 		let eventName = '';
 		for (let a = 0; a < element.attributes.length; a++) {
-			if (element.attributes[a].name.substr(0, 3) === 'on:') {
+			if (element.attributes[a].name.substr(0, 5) === 'cron:') {
 				eventAttr = element.attributes[a].name;
-				eventName = element.attributes[a].name.substr(3);
+				eventName = element.attributes[a].name.substr(5);
 				break;
 			}
 		}

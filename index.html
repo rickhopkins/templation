@@ -5,6 +5,9 @@
 			.red {
 				color: red;
 			}
+			.blue {
+				color: blue;
+			}
 		</style>
 	</head>
 	<body>
@@ -12,30 +15,30 @@
 			<div>
 				<h1 title="User Count: {{users.length}}">User Count: {{users.length}}</h1>
 				<ul>
-					<li for="u in users">{{u.name}} : {{u.age}}
-						<button on:click="modifyUser(u)">Modify</button>
-						<button on:click="toggleVisibility(u)">Toggle</button>
-						<ul if="u.selected">
-							<li for="n in u.test">
-								<button on:click="testFunc2(n)" class="red">
+					<li crFor="u in users">{{u.name}} : {{u.age}}
+						<button crOn:click="modifyUser(u)">Modify</button>
+						<button crOn:click="toggleVisibility(u)">Toggle</button>
+						<ul crIf="u.selected">
+							<li crFor="n in u.test">
+								<button crOn:click="testFunc2(n)" class="red">
 									Show {{n}}
 								</button>
 							</li>
 						</ul>
 					</li>
 				</ul>
-				<!-- <div on:mouseover="testFunc3('test message')">{{testFunc(users[0].name)}}</div> -->
 				<div>{{testFunc('Jack Is Cool')}}</div>
 				<div>{{ 2 + 2 }}</div>
 				<div>{{ 2 + users[0].age }}</div>
 				<div>{{ users[1].age < 40 }}</div>
-				<button on:click="addUser('New Kid', 13)">Add A User</button>
-				<button on:click="changeUsers()">Change Users</button>
+				<button crOn:click="addUser('New Kid', 13)">Add A User</button>
+				<button crOn:click="changeUsers()">Change Users</button>
 			</div>
 		</template>
 
 		<div id="app"></div>
 
+		<script type="text/javascript" src="data.js"></script>
 		<script type="text/javascript" src="test.js"></script>
 	</body>
 </html>
