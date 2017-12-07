@@ -39,9 +39,6 @@
 		{ 'selector': 'crOn', 'subSelectors': eventTypes, 'parser': eventAttach, 'order': 3, 'pre': false, 'post': true }
 	];
 
-	/** make the data observable */
-	observable(data);
-
 	function observable(obj) {
 		if (Array.isArray(obj) && !obj.hasOwnProperty('push')) observableArray(obj);
 		for (let prop in obj) {
@@ -98,26 +95,7 @@
 		updateDOM(app, virtualizeDOM(virtualDOM.content.children[0]), !initial ? virtualizeDOM(app.children[0]) : undefined);
 
 		/** cycle through post directives */
-		directives.filter(dir => dir.post).forEach(dir => {
-			/** initialize the directive elements */
-			let directiveElements;
-
-			/** does the directive have sub selectors */
-			if (dir.subSelectors.length > 0) {
-				/** find all matches and process each */
-				const joinedSubSelectors = dir.subSelectors.join(`], [${dir.selector}\\:`);
-				const subSelectors = `[${dir.selector}\\:${joinedSubSelectors}]`;
-
-				/** find all elements that match and parse */
-				directiveElements = app.querySelectorAll(subSelectors);
-				directiveElements.forEach(el => dir.parser(dir, el, app, data));
-			} else {
-				/** find in order and parse */
-				while ((directiveElements = app.querySelector(`[${dir.selector}]`)) !== null) {
-					dir.parser(dir, directiveElements, app, data);
-				}
-			}
-		});
+		parseDirectives(directives.filter(dir => dir.post), app);
 	}
 
 	function virtualizeDOM(element) {
@@ -144,32 +122,8 @@
 		/** create new template */
 		let virtualDOM = template.cloneNode(true);
 
-		/** sort the directives */
-		directives.sort(function(a, b) {
-			return a.order - b.order;
-		});
-
 		/** cycle through pre directives */
-		directives.filter(dir => dir.pre).forEach(dir => {
-			/** initialize the directive elements */
-			let directiveElements;
-
-			/** does the directive have sub selectors */
-			if (dir.subSelectors.length > 0) {
-				/** find all matches and process each */
-				const joinedSubSelectors = dir.subSelectors.join(`], [${dir.selector}\\:`);
-				const subSelectors = `[${dir.selector}\\:${joinedSubSelectors}]`;
-
-				/** find all elements that match and parse */
-				directiveElements = element.querySelectorAll(subSelectors);
-				directiveElements.forEach(el => dir.parser(dir, el, virtualDOM, data));
-			} else {
-				/** find in order and parse */
-				while ((directiveElements = virtualDOM.content.querySelector(`[${dir.selector}]`)) !== null) {
-					dir.parser(dir, directiveElements, virtualDOM, data);
-				}
-			}
-		});
+		parseDirectives(directives.filter(dir => dir.pre), virtualDOM.content);
 
 		/** replace simple template values */
 		templater(virtualDOM, data);
@@ -201,6 +155,35 @@
 
 		/** reset the innerHTML */
 		template.innerHTML = html;
+	}
+
+	function parseDirectives(dirs, element) {
+		/** sort the directives */
+		dirs.sort(function(a, b) {
+			return a.order - b.order;
+		});
+
+		/** execute each directive */
+		dirs.forEach(dir => {
+			/** initialize the directive elements */
+			let directiveElements;
+
+			/** does the directive have sub selectors */
+			if (dir.subSelectors.length > 0) {
+				/** find all matches and process each */
+				const joinedSubSelectors = dir.subSelectors.join(`], [${dir.selector}\\:`);
+				const subSelectors = `[${dir.selector}\\:${joinedSubSelectors}]`;
+
+				/** find all elements that match and parse */
+				directiveElements = element.querySelectorAll(subSelectors);
+				directiveElements.forEach(el => dir.parser(dir, el, data));
+			} else {
+				/** find in order and parse */
+				while ((directiveElements = element.querySelector(`[${dir.selector}]`)) !== null) {
+					dir.parser(dir, directiveElements, data);
+				}
+			}
+		});
 	}
 
 	function updateDOM(parent, newNode, oldNode, index) {
@@ -324,7 +307,7 @@
 
 	/** directive parser functions */
 
-	function forIterator(directive, forElement, template, data) {
+	function forIterator(directive, forElement, data) {
 		/** get the for attribute value expression */
 		var forAttrVal = forElement.getAttribute(directive.selector).split(' ');
 		var entityRef = forAttrVal[0];
@@ -371,13 +354,11 @@
 			});
 		}
 
-		/** replace the crFor element with the rows */
-		let html = template.innerHTML;
-		html = html.replace(forElement.outerHTML, forHTML);
-		template.innerHTML = html;
+		/** replace the forElements html */
+		forElement.outerHTML = forHTML;
 	}
 
-	function ifCheck(directive, ifElement, template, data) {
+	function ifCheck(directive, ifElement, data) {
 		/** get the for attribute value expression, and remove the attribute */
 		var ifAttrVal = ifElement.getAttribute(directive.selector);
 		ifElement.removeAttribute(directive.selector);
@@ -388,7 +369,7 @@
 		}
 	}
 
-	function eventAttach(directive, element, template, data) {
+	function eventAttach(directive, element, data) {
 		/** initialize the selector */
 		let selector = `${directive.selector.toLowerCase()}`;
 		if (directive.subSelectors.length > 0) selector += ':';
@@ -423,6 +404,9 @@
 		}
 	}
 
+	/** make the data observable */
+	observable(data);
+	
 	/** build the interface */
 	buildInterface(true);
 })();
