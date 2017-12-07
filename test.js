@@ -34,9 +34,9 @@
 
 	/** initialize directives */
 	let directives = [
-		{ 'selector': 'crFor', 'parser': forIterator, 'order': 1, 'pre': true, 'post': false },
-		{ 'selector': 'crIf', 'parser': ifCheck, 'order': 2, 'pre': true, 'post': false },
-		{ 'selector': 'crOn', 'parser': eventAttach, 'order': 3, 'pre': false, 'post': true }
+		{ 'selector': 'crFor', 'subSelectors': [], 'parser': forIterator, 'order': 1, 'pre': true, 'post': false },
+		{ 'selector': 'crIf', 'subSelectors': [], 'parser': ifCheck, 'order': 2, 'pre': true, 'post': false },
+		{ 'selector': 'crOn', 'subSelectors': eventTypes, 'parser': eventAttach, 'order': 3, 'pre': false, 'post': true }
 	];
 
 	/** make the data observable */
@@ -96,6 +96,28 @@
 
 		/** set the app */
 		updateDOM(app, virtualizeDOM(virtualDOM.content.children[0]), !initial ? virtualizeDOM(app.children[0]) : undefined);
+
+		/** cycle through post directives */
+		directives.filter(dir => dir.post).forEach(dir => {
+			/** initialize the directive elements */
+			let directiveElements;
+
+			/** does the directive have sub selectors */
+			if (dir.subSelectors.length > 0) {
+				/** find all matches and process each */
+				const joinedSubSelectors = dir.subSelectors.join(`], [${dir.selector}\\:`);
+				const subSelectors = `[${dir.selector}\\:${joinedSubSelectors}]`;
+
+				/** find all elements that match and parse */
+				directiveElements = app.querySelectorAll(subSelectors);
+				directiveElements.forEach(el => dir.parser(dir, el, app, data));
+			} else {
+				/** find in order and parse */
+				while ((directiveElements = app.querySelector(`[${dir.selector}]`)) !== null) {
+					dir.parser(dir, directiveElements, app, data);
+				}
+			}
+		});
 	}
 
 	function virtualizeDOM(element) {
@@ -129,9 +151,23 @@
 
 		/** cycle through pre directives */
 		directives.filter(dir => dir.pre).forEach(dir => {
+			/** initialize the directive elements */
 			let directiveElements;
-			while ((directiveElements = virtualDOM.content.querySelector(`[${dir.selector}]`)) !== null) {
-				dir.parser(dir, directiveElements, virtualDOM, data);
+
+			/** does the directive have sub selectors */
+			if (dir.subSelectors.length > 0) {
+				/** find all matches and process each */
+				const joinedSubSelectors = dir.subSelectors.join(`], [${dir.selector}\\:`);
+				const subSelectors = `[${dir.selector}\\:${joinedSubSelectors}]`;
+
+				/** find all elements that match and parse */
+				directiveElements = element.querySelectorAll(subSelectors);
+				directiveElements.forEach(el => dir.parser(dir, el, virtualDOM, data));
+			} else {
+				/** find in order and parse */
+				while ((directiveElements = virtualDOM.content.querySelector(`[${dir.selector}]`)) !== null) {
+					dir.parser(dir, directiveElements, virtualDOM, data);
+				}
 			}
 		});
 
@@ -167,15 +203,6 @@
 		template.innerHTML = html;
 	}
 
-	function attachEventListeners(element) {
-		/** create event selector */
-		const eventSelector = `[crOn\\:${eventTypes.join('], [cr\\:on\\:')}]`;
-		
-		/** search for click attribute (has to happen after inserted into DOM) */
-		var eventAttrElements = element.querySelectorAll(eventSelector);
-		eventAttrElements.forEach(el => eventAttach(el, data));
-	}
-
 	function updateDOM(parent, newNode, oldNode, index) {
 		if (!index) index = 0;
 
@@ -183,18 +210,12 @@
 			if (newNode) {
 				let newDOMNode = createElement(newNode);
 				parent.appendChild(newDOMNode);
-
-				/** attach events */
-				if (!['#text', '#comment'].includes(newNode.type)) attachEventListeners(newDOMNode);
 			}
 		} else if (!newNode) {
 			parent.removeChild(parent.childNodes[index]);
 		} else if (changed(newNode, oldNode)) {
 			let newDOMNode = createElement(newNode);
 			parent.replaceChild(newDOMNode, parent.childNodes[index]);
-
-			/** attach events */
-			if (!['#text', '#comment'].includes(newNode.type)) attachEventListeners(newDOMNode);
 		} else if (newNode.type) {
 			updateProps(parent.childNodes[index], newNode.props, oldNode.props);
 
@@ -367,14 +388,18 @@
 		}
 	}
 
-	function eventAttach(element, data) {
+	function eventAttach(directive, element, template, data) {
+		/** initialize the selector */
+		let selector = `${directive.selector.toLowerCase()}`;
+		if (directive.subSelectors.length > 0) selector += ':';
+
 		/** get all attributes */
 		let eventAttr = '';
 		let eventName = '';
 		for (let a = 0; a < element.attributes.length; a++) {
-			if (element.attributes[a].name.substr(0, 5) === 'cron:') {
+			if (element.attributes[a].name.substr(0, selector.length) === selector) {
 				eventAttr = element.attributes[a].name;
-				eventName = element.attributes[a].name.substr(5);
+				eventName = element.attributes[a].name.substr(selector.length);
 				break;
 			}
 		}
