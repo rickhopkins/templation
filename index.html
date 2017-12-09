@@ -13,7 +13,7 @@
 	<body>
 		<template id="user-template">
 			<div>
-				<h1 title="User Count: {{users.length}}">User Count: {{users.length}}</h1>
+				<h1 title="User Count: {{users.length}}" class="test" crClass="{ 'red': users.length % 2 == 0, 'blue': users.length % 2 !== 0 }">User Count: {{users.length}}</h1>
 				<ul>
 					<li crFor="u in users">{{u.name}} : {{u.age}}
 						<button crOn:click="modifyUser(u)">Modify</button>
@@ -30,7 +30,7 @@
 				<!-- <div crOn:mouseover="testFunc3('test message')">{{testFunc(users[0].name)}}</div> -->
 				<div>{{testFunc('Jack Is Cool')}}</div>
 				<div>{{ 2 + 2 }}</div>
-				<div>{{ 2 + users[0].age }}</div>
+				<div>{{ (2 + users[0].age).toString() }}</div>
 				<div>{{ users[1].age < 40 }}</div>
 				<button crOn:click="addUser('New Kid', 13)">Add A User</button>
 				<button crOn:click="changeUsers()">Change Users</button>

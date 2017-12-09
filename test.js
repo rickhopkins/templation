@@ -36,6 +36,7 @@
 	let directives = [
 		{ 'selector': 'crFor', 'subSelectors': [], 'parser': forIterator, 'order': 1, 'pre': true, 'post': false },
 		{ 'selector': 'crIf', 'subSelectors': [], 'parser': ifCheck, 'order': 2, 'pre': true, 'post': false },
+		{ 'selector': 'crClass', 'subSelectors': [], 'parser': classCheck, 'order': 3, 'pre': true, 'post': false },
 		{ 'selector': 'crOn', 'subSelectors': eventTypes, 'parser': eventAttach, 'order': 3, 'pre': false, 'post': true }
 	];
 
@@ -89,13 +90,27 @@
 
 		/** get the template and inner html */
 		const originalTemplate = document.getElementById('user-template');
-		const virtualDOM = createVirtualDOM(originalTemplate);
+		const tempDOM = createTempDOM(originalTemplate);
 
 		/** set the app */
-		updateDOM(app, virtualizeDOM(virtualDOM.content.children[0]), !initial ? virtualizeDOM(app.children[0]) : undefined);
+		updateDOM(app, virtualizeDOM(tempDOM.content.children[0]), !initial ? virtualizeDOM(app.children[0]) : undefined);
 
 		/** cycle through post directives */
 		parseDirectives(directives.filter(dir => dir.post), app);
+	}
+
+	function createTempDOM(template) {
+		/** create new template */
+		let tempDOM = template.cloneNode(true);
+
+		/** cycle through pre directives */
+		parseDirectives(directives.filter(dir => dir.pre), tempDOM.content);
+
+		/** replace simple template values */
+		templater(tempDOM, data);
+
+		/** return the virtual DOM */
+		return tempDOM;
 	}
 
 	function virtualizeDOM(element) {
@@ -116,20 +131,6 @@
 		}
 
 		return vElement;
-	}
-
-	function createVirtualDOM(template) {
-		/** create new template */
-		let virtualDOM = template.cloneNode(true);
-
-		/** cycle through pre directives */
-		parseDirectives(directives.filter(dir => dir.pre), virtualDOM.content);
-
-		/** replace simple template values */
-		templater(virtualDOM, data);
-
-		/** return the virtual DOM */
-		return virtualDOM;
 	}
 
 	/** return a function that can do template parsing */
@@ -367,6 +368,39 @@
 		if (using(data, ifAttrVal) === false) {
 			ifElement.parentNode.removeChild(ifElement);
 		}
+	}
+
+	function classCheck(directive, classElement, data) {
+		/** get the attribute value expression, and remove the attribute */
+		var classAttrVal = classElement.getAttribute(directive.selector);
+		classElement.removeAttribute(directive.selector);
+
+		/** get the current class list */
+		let classList = [];
+		for (var i = 0; i < classElement.classList.length; i++) {
+			classList.push(classElement.classList[i]);
+		}
+
+		/** evaluate the expression */
+		let classObj = using(data, classAttrVal);
+		
+		/** create internal class check function */
+		const hasClass = (className) => {
+			return classList.includes(className);
+		};
+
+		/** add/remove classes */
+		Object.keys(classObj).forEach(key => {
+			/** check if the class is true */
+			if (classObj[key] === true) {
+				if (!hasClass(key)) classList.push(key);
+			} else {
+				if (hasClass(key)) classList.splice(classList.indexOf(key), 1);
+			}
+		});
+
+		/** reset the class list */
+		classElement.classList = classList.join(' ');
 	}
 
 	function eventAttach(directive, element, data) {
