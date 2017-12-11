@@ -1,8 +1,8 @@
 module.exports = {
-	entry: './src/index',
+	entry: './src/example',
 	devtool: 'source-map',
 	output: {
-		filename: './dist/templation.js'
+		filename: './dist/example.js'
 	},
 	module: {
 		loaders: [
