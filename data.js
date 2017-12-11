@@ -1,5 +1,5 @@
 /** setup data */
-var data = {
+let data = {
 	count: 2,
 	users: [
 		{ 'id': 0, 'name': 'John Doe', age: 38, selected: true, test: [1, 2, 3] },
@@ -41,3 +41,5 @@ var data = {
 		user.selected = !user.selected;
 	}
 };
+
+export { data };

@@ -1,0 +1,23 @@
+{
+	"name": "templation",
+	"version": "1.0.0",
+	"description": "A javascript / html template engine with data binding.",
+	"main": "src/index.js",
+	"scripts": {},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rickhopkins/templation.git"
+	},
+	"author": "Rick Hopkins <rick.hopkins@gmail.com>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/rickhopkins/templation/issues"
+	},
+	"homepage": "https://github.com/rickhopkins/templation#readme",
+	"devDependencies": {
+		"babel-core": "^6.26.0",
+		"babel-loader": "^7.1.2",
+		"babel-preset-env": "^1.6.0",
+		"webpack": "^3.5.6"
+	}
+}
