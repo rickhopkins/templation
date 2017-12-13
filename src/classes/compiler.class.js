@@ -18,6 +18,7 @@ class Compiler {
 		if (typeof template === 'string') template = document.getElementById(template);
 	
 		/** check the template for one and only one child */
+		if (template.nodeName !== 'TEMPLATE') throw 'The template should be a template element (<template>)';
 		if (template.content.children.length !== 1) throw 'The template must contain one root element.';
 
 		/** public properties */
