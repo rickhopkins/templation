@@ -11,7 +11,7 @@
 		</style>
 	</head>
 	<body>
-		<template id="user-template">
+		<template id="template-1">
 			<div>
 				<h1 title="User Count: {{users.length}}" class="test" crClass="{ 'red': users.length % 2 == 0, 'blue': users.length % 2 !== 0 }">User Count: {{users.length}}</h1>
 				<ul>
@@ -37,7 +37,20 @@
 			</div>
 		</template>
 
-		<div id="app"></div>
+		<template id="template-2">
+			<div>
+				<div>
+					<strong>Name:</strong> {{name}}
+				</div>
+				<div>
+					<strong>Email:</strong> {{email}}
+				</div>
+				<button crOn:click="update()">Update</button>
+			</div>
+		</template>
+
+		<div id="app-1"></div>
+		<div id="app-2" style="position: absolute; top: 50px; right: 50px;"></div>
 
 		<script src="./dist/example.js"></script>
 	</body>

@@ -42,4 +42,14 @@ let data = {
 	}
 };
 
-export { data };
+/** secondary data object */
+let user = {
+	name: 'Rick Hopkins',
+	email: 'rick.hopkins@gmail.com',
+	update: function() {
+		let newName = prompt('What would you like the new name to be?');
+		user.name = newName;
+	},
+};
+
+export { data, user };
