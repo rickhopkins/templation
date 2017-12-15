@@ -9,7 +9,7 @@ const crClassDirective = new Directive('crClass', classCheck);
 export { crClassDirective };
 
 /** define the directive parser function */
-function classCheck(directive, details, classElement, data) {
+function classCheck(details, classElement, data) {
 	/** get the current class list */
 	let classList = [];
 	for (var i = 0; i < classElement.classList.length; i++) {

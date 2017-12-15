@@ -45,7 +45,7 @@ const crOnDirective = new Directive('crOn', eventAttach)
 export { crOnDirective };
 
 /** define the directive parser function */
-function eventAttach(directive, details, element, data) {
+function eventAttach(details, element, data) {
 	/** create the event function */
 	let eventFunc = function() {
 		return using(data, details.value);

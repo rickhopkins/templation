@@ -115,71 +115,51 @@ function parseDirectives(dirs, element, data) {
 
 	/** execute each directive */
 	dirs.forEach(dir => {
-		/** initialize the directive elements */
-		let directiveElements;
+		/** create an array of selectors */
+		let selectors = [];
 
-		/** does the directive have sub selectors */
+		/** check for sub selectors */
 		if (dir.subSelectors.length > 0) {
-			/** find all matches and process each */
-			const joinedSubSelectors = dir.subSelectors.join(`], [${dir.selector}\\:`);
-			const subSelectors = `[${dir.selector}\\:${joinedSubSelectors}]`;
-
-			/** find all elements that match and parse */
-			directiveElements = element.querySelectorAll(subSelectors);
-			directiveElements.forEach(el => {
-				let details = getDirectiveDetails(dir, el);
-				dir.parser(dir, details, el, data);
+			/** cycle thru sub selectors */
+			dir.subSelectors.forEach(ss => {
+				/** add the selector with sub selector */
+				selectors.push(`${dir.selector}\\:${ss}`);
 			});
 		} else {
-			/** find in order and parse */
-			while ((directiveElements = element.querySelector(`[${dir.selector}]`)) !== null) {
-				let details = getDirectiveDetails(dir, directiveElements);
-				dir.parser(dir, details, directiveElements, data);
-			}
+			/** add the single selector */
+			selectors.push(dir.selector);
 		}
+
+		/** cycle through selectors */
+		selectors.forEach(selector => {
+			/** initialize the directive elements */
+			let directiveElement;
+			while ((directiveElement = element.querySelector(`[${selector}]`)) !== null) {
+				let details = getDirectiveDetails(directiveElement, dir, selector);
+				dir.parser(details, directiveElement, data);
+			}
+		});
 	});
 }
 
 /** get the attribute name (selector), sub selector, and value of a directive */
-function getDirectiveDetails(directive, element) {
+function getDirectiveDetails(element, directive, selector) {
 	/** initialize the details */
 	let details = { 'value': null, 'subSelector': null };
 
 	/** get the selector */
-	let selector = directive.selector;
+	selector = selector.replace('\\', '');
+	if (directive.isPost()) selector = selector.toLowerCase();
 
-	/** check for sub selectors */
-	if (directive.subSelectors.length > 0) {
-		/** search for sub selector attribute */
-		selector += ':';
-		if (directive.isPost()) selector = selector.toLowerCase();
+	/** get the attribute value expression, and remove the attribute */
+	var attrVal = element.getAttribute(selector);
+	element.removeAttribute(selector);
 
-		/** get all attributes */
-		let attrName = '';
-		let subSelector = '';
-		for (let a = 0; a < element.attributes.length; a++) {
-			if (element.attributes[a].name.substr(0, selector.length) === selector) {
-				attrName = element.attributes[a].name;
-				subSelector = element.attributes[a].name.substr(selector.length);
-				break;
-			}
-		}
+	/** set details */
+	details.value = attrVal;
 
-		/** get the attribute value and remove */
-		let attrVal = element.getAttribute(attrName);
-		element.removeAttribute(attrName);
-
-		/** set details */
-		details.value = attrVal;
-		details.subSelector = subSelector;
-	} else {
-		/** get the attribute value expression, and remove the attribute */
-		var attrVal = element.getAttribute(directive.selector);
-		element.removeAttribute(directive.selector);
-
-		/** set details */
-		details.value = attrVal;
-	}
+	/** check for sub selector */
+	if (selector.includes(':')) details.subSelector = selector.split(':')[1];
 
 	/** return the details */
 	return details;

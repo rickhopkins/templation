@@ -8,7 +8,7 @@ const crForDirective = new Directive('crFor', forIterator);
 export { crForDirective };
 
 /** define the directive parser function */
-function forIterator(directive, details, forElement, data) {
+function forIterator(details, forElement, data) {
 	/** get the for attribute value expression */
 	var forAttrVal = details.value.split(' ');
 	var entityRef = forAttrVal[0];
@@ -27,7 +27,6 @@ function forIterator(directive, details, forElement, data) {
 		dataProperty.forEach((row, i) => {
 			/** add html for the iteration */
 			var rowEl = forElement.cloneNode(true);
-			//rowEl.removeAttribute(directive.selector);
 			var rowHTML = rowEl.outerHTML;
 
 			/** get the row properties */

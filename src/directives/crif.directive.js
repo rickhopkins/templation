@@ -9,7 +9,7 @@ const crIfDirective = new Directive('crIf', ifCheck);
 export { crIfDirective };
 
 /** define the directive parser function */
-function ifCheck(directive, details, ifElement, data) {
+function ifCheck(details, ifElement, data) {
 	/** evaluate the expression */
 	if (using(data, details.value) === false) {
 		ifElement.parentNode.removeChild(ifElement);
