@@ -126,14 +126,63 @@ function parseDirectives(dirs, element, data) {
 
 			/** find all elements that match and parse */
 			directiveElements = element.querySelectorAll(subSelectors);
-			directiveElements.forEach(el => dir.parser(dir, el, data));
+			directiveElements.forEach(el => {
+				let details = getDirectiveDetails(dir, el);
+				dir.parser(dir, details, el, data);
+			});
 		} else {
 			/** find in order and parse */
 			while ((directiveElements = element.querySelector(`[${dir.selector}]`)) !== null) {
-				dir.parser(dir, directiveElements, data);
+				let details = getDirectiveDetails(dir, directiveElements);
+				dir.parser(dir, details, directiveElements, data);
 			}
 		}
 	});
+}
+
+/** get the attribute name (selector), sub selector, and value of a directive */
+function getDirectiveDetails(directive, element) {
+	/** initialize the details */
+	let details = { 'value': null, 'subSelector': null };
+
+	/** get the selector */
+	let selector = directive.selector;
+
+	/** check for sub selectors */
+	if (directive.subSelectors.length > 0) {
+		/** search for sub selector attribute */
+		selector += ':';
+		if (directive.isPost()) selector = selector.toLowerCase();
+
+		/** get all attributes */
+		let attrName = '';
+		let subSelector = '';
+		for (let a = 0; a < element.attributes.length; a++) {
+			if (element.attributes[a].name.substr(0, selector.length) === selector) {
+				attrName = element.attributes[a].name;
+				subSelector = element.attributes[a].name.substr(selector.length);
+				break;
+			}
+		}
+
+		/** get the attribute value and remove */
+		let attrVal = element.getAttribute(attrName);
+		element.removeAttribute(attrName);
+
+		/** set details */
+		details.value = attrVal;
+		details.subSelector = subSelector;
+	} else {
+		/** get the attribute value expression, and remove the attribute */
+		var attrVal = element.getAttribute(directive.selector);
+		element.removeAttribute(directive.selector);
+
+		/** set details */
+		details.value = attrVal;
+	}
+
+	/** return the details */
+	return details;
 }
 
 /** create a DOM element based on the virtual DOM node passed */

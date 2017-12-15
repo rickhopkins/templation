@@ -45,37 +45,13 @@ const crOnDirective = new Directive('crOn', eventAttach)
 export { crOnDirective };
 
 /** define the directive parser function */
-function eventAttach(directive, element, data) {
-	/** initialize the selector */
-	let selector = `${directive.selector.toLowerCase()}`;
-	if (directive.subSelectors.length > 0) selector += ':';
+function eventAttach(directive, details, element, data) {
+	/** create the event function */
+	let eventFunc = function() {
+		return using(data, details.value);
+	};
 
-	/** get all attributes */
-	let eventAttr = '';
-	let eventName = '';
-	for (let a = 0; a < element.attributes.length; a++) {
-		if (element.attributes[a].name.substr(0, selector.length) === selector) {
-			eventAttr = element.attributes[a].name;
-			eventName = element.attributes[a].name.substr(selector.length);
-			break;
-		}
-	}
-
-	/** get the event attribute */
-	if (eventAttr.length > 0) {
-		/** get the attribute value */
-		var elementAttrVal = element.getAttribute(eventAttr);
-
-		/** create the event function */
-		let eventFunc = function() {
-			return using(data, elementAttrVal);
-		};
-
-		/** remove and re-add the event listener */
-		element.removeEventListener(eventName, eventFunc);
-		element.addEventListener(eventName, eventFunc);
-
-		/** remove the attribute */
-		element.removeAttribute(eventAttr);
-	}
+	/** remove and re-add the event listener */
+	element.removeEventListener(details.subSelector, eventFunc);
+	element.addEventListener(details.subSelector, eventFunc);
 }

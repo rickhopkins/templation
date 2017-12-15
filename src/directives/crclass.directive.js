@@ -9,11 +9,7 @@ const crClassDirective = new Directive('crClass', classCheck);
 export { crClassDirective };
 
 /** define the directive parser function */
-function classCheck(directive, classElement, data) {
-	/** get the attribute value expression, and remove the attribute */
-	var classAttrVal = classElement.getAttribute(directive.selector);
-	classElement.removeAttribute(directive.selector);
-
+function classCheck(directive, details, classElement, data) {
 	/** get the current class list */
 	let classList = [];
 	for (var i = 0; i < classElement.classList.length; i++) {
@@ -21,7 +17,7 @@ function classCheck(directive, classElement, data) {
 	}
 
 	/** evaluate the expression */
-	let classObj = using(data, classAttrVal);
+	let classObj = using(data, details.value);
 	
 	/** create internal class check function */
 	const hasClass = (className) => {

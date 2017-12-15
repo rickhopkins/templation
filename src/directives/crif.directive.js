@@ -9,13 +9,9 @@ const crIfDirective = new Directive('crIf', ifCheck);
 export { crIfDirective };
 
 /** define the directive parser function */
-function ifCheck(directive, ifElement, data) {
-	/** get the for attribute value expression, and remove the attribute */
-	var ifAttrVal = ifElement.getAttribute(directive.selector);
-	ifElement.removeAttribute(directive.selector);
-
+function ifCheck(directive, details, ifElement, data) {
 	/** evaluate the expression */
-	if (using(data, ifAttrVal) === false) {
+	if (using(data, details.value) === false) {
 		ifElement.parentNode.removeChild(ifElement);
 	}
 }
