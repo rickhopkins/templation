@@ -1,5 +1,5 @@
 {
-	"name": "templation",
+	"name": "templation-js",
 	"version": "1.0.0",
 	"description": "A javascript / html template engine with data binding.",
 	"main": "src/index.js",
